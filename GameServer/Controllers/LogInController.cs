@@ -23,7 +23,7 @@ namespace GameServer.Controllers
 			response.Success = true;
 			response.User = gameUser;
 
-			return new JsonResult(response);
+			return Json(response);
 		}
 
 		[HttpPost]
@@ -36,7 +36,7 @@ namespace GameServer.Controllers
 				response.Success = false;
 				response.Message = "Null request";
 
-				return new JsonResult(response);
+				return Json(response);
 			}
 
 			string user = $"'{request.Username}'";
@@ -84,6 +84,8 @@ namespace GameServer.Controllers
 					response.Success = true;
 					response.Message = r.Message;
 					response.AccessKey = sessionKey;
+					response.UserId = newUser.Id;
+					response.Username = newUser.Username;
 					return Json(response);
 				}
 				else
@@ -109,11 +111,13 @@ namespace GameServer.Controllers
 
 					if (PasswordHasher.VerifyHashedPassword(hashedPassword, userTypedPassword))
 					{
-						string accessKey = CreateNewLogInSession(gameUser);
+						string sessionKey = CreateNewLogInSession(gameUser);
 
-						if(accessKey != null)
+						if(sessionKey != null)
 						{
-							response.AccessKey = accessKey;
+							response.AccessKey = sessionKey;
+							response.UserId = gameUser.Id;
+							response.Username = gameUser.Username;
 							response.Success = true;
 							response.Message = "Welcome back";
 							Console.WriteLine($"{gameUser.Username} has logged in.");
@@ -132,7 +136,7 @@ namespace GameServer.Controllers
 				}
 			}
 
-			return new JsonResult(response);
+			return Json(response);
 		}
 
 		[HttpPut("{id}")]
@@ -152,7 +156,7 @@ namespace GameServer.Controllers
 			string accesskey = PasswordHasher.HashPassword(user.Password);
 			string accessToken = PasswordHasher.HashPassword(accesskey);
 			//bool match = PasswordHasher.VerifyHashedPassword(accessToken, accesskey);
-			//Console.WriteLine(accesskey);
+			//Console.WriteLine(match);
 
 			string sql = $"DELETE FROM Users.LogInSessions WHERE userId={user.Id} INSERT INTO Users.LogInSessions VALUES({user.Id}, '{user.Username}', '{accessToken}', SYSDATETIME()) SELECT * FROM Users.LogInSessions WHERE id=SCOPE_IDENTITY()";
 			JsonResult query = SqlConnector.Query(sql);

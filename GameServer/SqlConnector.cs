@@ -19,7 +19,7 @@ namespace GameServer
 
 		public static T[] ExtractListFromResult<T>(this JsonResult query)
 		{
-			T[] output = new T[0];
+			T[] output;
 
 			if (query == null || (string)query.Value == "")
 			{

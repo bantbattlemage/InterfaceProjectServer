@@ -31,7 +31,7 @@ namespace GameServer.Controllers
 		{
 			LogInResponse response = new LogInResponse();
 
-			if(request == null || request.Username == "" || request.Password == "")
+			if(request == null || request.Username == "" || request.Password == "" || (request.NewRegistration && request.Email == ""))
 			{
 				response.Success = false;
 				response.Message = "Null request";
@@ -43,20 +43,12 @@ namespace GameServer.Controllers
 			string userTypedPassword = request.Password;
 			string email = $"'{request.Email}'";
 			bool usernameExists = false;
-			bool emailExists = false;
 
 			string sql = $"SELECT username FROM Users.Accounts WHERE username={user}";
 			JsonResult query = SqlConnector.Query(sql);
 			if(query != null)
 			{
 				usernameExists = (string)query.Value != "";
-			}
-
-			sql = $"SELECT email FROM Users.Accounts WHERE email={email}";
-			query = SqlConnector.Query(sql);
-			if (query != null)
-			{
-				emailExists = (string)query.Value != "";
 			}
 
 			if (!request.NewRegistration && !usernameExists)
@@ -69,13 +61,24 @@ namespace GameServer.Controllers
 				response.Success = false;
 				response.Message = "Username already exits";
 			}
-			else if(request.NewRegistration && emailExists)
-			{
-				response.Success = false;
-				response.Message = "Email already registered";
-			}
 			else if (request.NewRegistration)
 			{
+				bool emailExists = false;
+
+				sql = $"SELECT email FROM Users.Accounts WHERE email={email}";
+				query = SqlConnector.Query(sql);
+				if(query != null)
+				{
+					emailExists = (string)query.Value != "";
+				}
+
+				if(emailExists)
+				{
+					response.Success = false;
+					response.Message = "Email already registered";
+					return Json(response);
+				}
+
 				GetUserResponse r;
 				GameUser newUser = RegisterNewAccount(request, out r);
 				if(newUser != null)
@@ -97,6 +100,9 @@ namespace GameServer.Controllers
 			}
 			else
 			{
+				LogIn();
+				//	^ compress the below into a function
+
 				if(!usernameExists)
 				{
 					response.Success = false;
@@ -149,6 +155,11 @@ namespace GameServer.Controllers
 		public JsonResult Delete(int id)
 		{
 			return Json(false);
+		}
+
+		private static void LogIn()
+		{
+
 		}
 
 		private static string CreateNewLogInSession(GameUser user)

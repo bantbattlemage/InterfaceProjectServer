@@ -18,6 +18,12 @@ namespace GameComms
 		public GameUser User { get; set; }
 	}
 
+	public class ChatJoinResponse : Response
+	{
+		public ChatUser AssignedChatUser { get; set; }
+		public ChatMessage[] ChatMessages { get; set; }
+	}
+
 	public class ChatMessageResponse : Response
 	{
 		public ChatMessage[] ChatMessages { get; set; }

@@ -14,11 +14,6 @@ namespace GameServer.Controllers
 		[HttpPut]
 		public JsonResult Put([FromBody] ChatMessageReadRequest request)
 		{
-			//if(ActiveRequests.Contains(request))
-			//{
-			//	return Json(new Response() { Success = false, Message = "busy" });;
-			//}
-
 			string sql;
 			JsonResult query;
 			ChatMessageResponse response = new ChatMessageResponse();
@@ -32,21 +27,14 @@ namespace GameServer.Controllers
 				return Json(r);
 			}
 
-			ChatUserResponse chatUserResponse;
-			ChatUser user = ChatController.GetChatUser(request.SenderUserId, room.Id, false, out chatUserResponse);
-			if (user == null)
-			{
-				ChatController.JoinChatRoom(request.SenderUserId, room.Id, out chatUserResponse);
-				response.Message = chatUserResponse.Message;
-				response.Success = chatUserResponse.Success;
-			}
-			else
-			{
-				//if(user.ActiveTime.AddSeconds(2) <= DateTime.Now)
-				//{
-				//	return Json(new Response() { Success = false, Message = user.ActiveTime.ToString() }); ; ;
-				//}
-			}
+			//ChatUserResponse chatUserResponse;
+			//ChatUser user = ChatController.GetChatUser(request.SenderUserId, room.Id, false, out chatUserResponse);
+			//if (user == null)
+			//{
+			//	ChatController.JoinChatRoom(request.SenderUserId, room.Id, out chatUserResponse);
+			//	response.Message = chatUserResponse.Message;
+			//	response.Success = chatUserResponse.Success;
+			//}
 
 			DateTime time = request.LastMessageRead.AddSeconds(0.1d);
 

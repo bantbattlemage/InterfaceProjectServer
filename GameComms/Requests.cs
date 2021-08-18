@@ -26,14 +26,16 @@ namespace GameComms
     {
 		public int SenderUserId { get; set; }
 		public int ChatRoomId { get; set; }
+		public string Username { get; set; }
     }
 
 	public class ChatMessagePostRequest : Request
 	{
 		public int SenderUserId { get; set; }
-		public string TimeStamp { get; set; }
 		public int ChatRoomId { get; set; }
+		public string Username { get; set; }
 		public string Message { get; set; }
+		public string TimeStamp { get; set; }
 	}
 
 	public class ChatMessageReadRequest : Request

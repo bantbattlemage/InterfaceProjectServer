@@ -26,6 +26,7 @@ namespace GameComms
 	{
 		public int UserId { get; set; }
 		public int RoomId { get; set; }
+		public string Username { get; set; }
 		public string Message { get; set; }
 		public DateTime TimeStamp { get; set; }
 	}
@@ -34,7 +35,7 @@ namespace GameComms
 	{
 		public int UserId { get; set; }
 		public int RoomId { get; set; }
+		public string Username { get; set; }
 		public DateTime ActiveTime { get; set; }
 	}
-
 }

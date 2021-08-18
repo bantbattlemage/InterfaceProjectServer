@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 
 //POST to a URL creates a child resource at a server defined URL.
 //PUT to a URL creates/replaces the resource in its entirety at the client defined URL.
@@ -19,23 +20,7 @@ namespace GameServer.Controllers
 		[HttpGet("{roomId}")]
 		public JsonResult Get(int roomId)
 		{
-			string sql;
-			JsonResult query;
-			ChatMessageResponse response = new ChatMessageResponse();
-
-			Response r;
-			ChatRoom room = GetChatRoom(roomId, out r);
-			if(room == null)
-            {
-				response.Message = r.Message;
-				response.Success = r.Success;
-				return Json(r);
-            }
-
-			sql = $"SELECT * FROM Chat.ChatMessages WHERE roomId={roomId}";
-			query = SqlConnector.Query(sql);
-
-			response.ChatMessages = JsonConvert.DeserializeObject<ChatMessage[]>((string)query.Value);
+			ChatMessageResponse response = GetAllChatMessages(roomId);
 
 			return Json(response);
 		}
@@ -74,15 +59,41 @@ namespace GameServer.Controllers
 		[HttpPut]
 		public JsonResult Put([FromBody] JoinChatRoomRequest request)
 		{
-			ChatUserResponse response;
-			ChatUser chatUser = JoinChatRoom(request.SenderUserId, request.ChatRoomId, out response);
-			response.ChatRoomUser = chatUser;
-			
+			ChatJoinResponse response = new ChatJoinResponse();
+
+			ChatUserResponse userResponse;
+			ChatUser chatUser = JoinChatRoom(request, out userResponse);
+			if (chatUser == null)
+			{
+				response.Success = userResponse.Success;
+				response.Message = userResponse.Message;
+				return Json(response);
+			}
+
+			ChatMessageResponse messageResponse;
+			messageResponse = GetAllChatMessages(request.ChatRoomId);
+
+			if(messageResponse == null || messageResponse.Success == false)
+			{
+				response.Success = messageResponse.Success;
+				response.Message = messageResponse.Message;
+				return Json(response);
+			}
+
+			response.AssignedChatUser = chatUser;
+			response.ChatMessages = messageResponse.ChatMessages;
+			response.Success = true;
+			response.Message = "success";
+
 			return Json(response);
 		}
 
-		public static ChatUser JoinChatRoom(int userId, int roomId, out ChatUserResponse response)
+		public static ChatUser JoinChatRoom(JoinChatRoomRequest joinRequest, out ChatUserResponse response)
         {
+			int roomId = joinRequest.ChatRoomId;
+			int userId = joinRequest.SenderUserId;
+			string username = joinRequest.Username;
+
 			string sql;
 			JsonResult query;
 			response = new ChatUserResponse();
@@ -109,7 +120,7 @@ namespace GameServer.Controllers
 				return existingChatUser;
 			}
 
-			sql = $"INSERT INTO Chat.ChatUsers VALUES ({userId}, {roomId}, SYSDATETIME()) SELECT * FROM Chat.ChatUsers WHERE id=SCOPE_IDENTITY()";
+			sql = $"INSERT INTO Chat.ChatUsers VALUES ({userId}, {roomId}, '{username}', SYSDATETIME()) SELECT * FROM Chat.ChatUsers WHERE id=SCOPE_IDENTITY()";
 			query = SqlConnector.Query(sql);
 			ChatUser newChatUser = JsonConvert.DeserializeObject<ChatUser>((string)query.Value);
 
@@ -118,6 +129,48 @@ namespace GameServer.Controllers
 			response.Success = true;
 
 			return newChatUser;
+		}
+
+		public static ChatMessageResponse GetAllChatMessages(int roomId)
+		{
+			string sql;
+			JsonResult query;
+			ChatMessageResponse response = new ChatMessageResponse();
+
+			Response r;
+			ChatRoom room = GetChatRoom(roomId, out r);
+			if (room == null)
+			{
+				response.Message = r.Message;
+				response.Success = r.Success;
+				return response;
+			}
+
+			sql = $"SELECT * FROM Chat.ChatMessages WHERE roomId={roomId}";
+			query = SqlConnector.Query(sql);
+
+			if (query == null || (string)query.Value == "")
+			{
+				response.ChatMessages = new ChatMessage[0];
+			}
+			else
+			{
+				try
+				{
+					response.ChatMessages = JsonConvert.DeserializeObject<ChatMessage[]>((string)query.Value);
+				}
+				catch
+				{
+					response.ChatMessages = new ChatMessage[] { JsonConvert.DeserializeObject<ChatMessage>((string)query.Value) };
+				}
+			}
+
+			response.ChatMessages = response.ChatMessages.OrderBy(x => x.TimeStamp).ToArray();
+
+			response.Success = true;
+			response.Message = "success";
+
+			return response;
 		}
 
 		public static ChatRoom GetChatRoom(int roomId, out Response response)
@@ -178,16 +231,7 @@ namespace GameServer.Controllers
 			response = new ChatMessageResponse();
 			ChatMessage chatMessage;
 
-			//ChatUserResponse r;
-			//ChatUser existingChatUser = GetChatUser(user.UserId, user.RoomId, true, out r);
-			//if(existingChatUser == null)
-   //         {
-			//	response.Message = r.Message;
-			//	response.Success = r.Success;
-			//	return null;
-   //         }
-
-			string sql = $"INSERT INTO Chat.ChatMessages VALUES ({user.UserId}, {user.RoomId}, '{message}', SYSDATETIME()) SELECT * FROM Chat.ChatMessages WHERE id=SCOPE_IDENTITY()";
+			string sql = $"INSERT INTO Chat.ChatMessages VALUES ({user.UserId}, {user.RoomId}, '{user.Username}', '{message}', SYSDATETIME()) SELECT * FROM Chat.ChatMessages WHERE id=SCOPE_IDENTITY()";
 
 			JsonResult query = SqlConnector.Query(sql);
 

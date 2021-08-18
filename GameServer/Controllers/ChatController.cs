@@ -81,7 +81,7 @@ namespace GameServer.Controllers
 			return Json(response);
 		}
 
-		private ChatUser JoinChatRoom(int userId, int roomId, out ChatUserResponse response)
+		public static ChatUser JoinChatRoom(int userId, int roomId, out ChatUserResponse response)
         {
 			string sql;
 			JsonResult query;
@@ -120,7 +120,7 @@ namespace GameServer.Controllers
 			return newChatUser;
 		}
 
-		private ChatRoom GetChatRoom(int roomId, out Response response)
+		public static ChatRoom GetChatRoom(int roomId, out Response response)
 		{
 			response = new Response();
 
@@ -142,7 +142,7 @@ namespace GameServer.Controllers
 			return result;
 		}
 
-		private ChatUser GetChatUser(int userId, int roomId, bool updateActiveTime, out ChatUserResponse response)
+		public static ChatUser GetChatUser(int userId, int roomId, bool updateActiveTime, out ChatUserResponse response)
 		{
 			response = new ChatUserResponse();
 			ChatUser chatUser;
@@ -167,28 +167,25 @@ namespace GameServer.Controllers
 			}
 			
 			response.ChatRoomUser = chatUser;
-			response.Message = "Returning existing user";
-			response.Success = true;
-
 			response.Success = true;
 			response.Message = "success";
 
 			return chatUser;
 		}
 
-		private ChatMessage PostChatMessage(ChatUser user, string message, out ChatMessageResponse response)
+		public static ChatMessage PostChatMessage(ChatUser user, string message, out ChatMessageResponse response)
 		{
 			response = new ChatMessageResponse();
 			ChatMessage chatMessage;
 
-			ChatUserResponse r;
-			ChatUser existingChatUser = GetChatUser(user.UserId, user.RoomId, true, out r);
-			if(existingChatUser == null)
-            {
-				response.Message = r.Message;
-				response.Success = r.Success;
-				return null;
-            }
+			//ChatUserResponse r;
+			//ChatUser existingChatUser = GetChatUser(user.UserId, user.RoomId, true, out r);
+			//if(existingChatUser == null)
+   //         {
+			//	response.Message = r.Message;
+			//	response.Success = r.Success;
+			//	return null;
+   //         }
 
 			string sql = $"INSERT INTO Chat.ChatMessages VALUES ({user.UserId}, {user.RoomId}, '{message}', SYSDATETIME()) SELECT * FROM Chat.ChatMessages WHERE id=SCOPE_IDENTITY()";
 

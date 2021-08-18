@@ -12,14 +12,20 @@ namespace GameServer.Controllers
 	{
 		public static Dictionary<string, GameUser> ActiveUsers = new Dictionary<string, GameUser>();
 
-		[HttpGet]
-		public JsonResult Get([FromBody] GetUserRequest value)
+		[HttpGet("{id}")]
+		public JsonResult Get(int id)
 		{
 			GetUserResponse response = new GetUserResponse();
 
+			string sql = $"SELECT * FROM Users.Accounts WHERE id={id}";
+			JsonResult result = SqlConnector.Query(sql);
+			GameUser gameUser = JsonConvert.DeserializeObject<GameUser>((string)result.Value);
 
+			response.Message = "success";
+			response.Success = true;
+			response.User = gameUser;
 
-			return Json(response);
+			return new JsonResult(response);
 		}
 
 		[HttpPost]
@@ -115,7 +121,7 @@ namespace GameServer.Controllers
 					{
 						response.Success = true;
 						response.Message = "Welcome back";
-						ActiveUsers.Add(pw, gameUser);
+						//ActiveUsers.Add(pw, gameUser);
 						Console.WriteLine($"{gameUser.Username} has logged in.");
 					}
 					else

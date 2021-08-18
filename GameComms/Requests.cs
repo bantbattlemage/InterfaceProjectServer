@@ -44,4 +44,9 @@ namespace GameComms
 		public int ChatRoomId { get; set; }
 		public DateTime LastMessageRead { get; set; }
 	}
+
+	public class ChatMessageReadRequests : Request
+	{
+		public ChatMessageReadRequest[] Requests;
+	}
 }

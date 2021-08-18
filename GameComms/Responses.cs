@@ -10,7 +10,7 @@ namespace GameComms
 
 	public class LogInResponse : Response
 	{
-
+		public string AccessKey { get; set; }
 	}
 
 	public class GetUserResponse : Response

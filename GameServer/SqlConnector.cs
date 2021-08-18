@@ -12,21 +12,30 @@ namespace GameServer
 	{
 		private static SqlConnectionStringBuilder _builder;
 
-		public static string SqlString(string s)
+		public static string ToSqlTime(this DateTime t)
 		{
-			return "'" + s + "'";
+			return t.ToString("yyyy-MM-dd HH:mm:ss");
 		}
 
-		public static string SqlString(DateTime t)
+		public static T[] ExtractListFromResult<T>(this JsonResult query)
 		{
-			return SqlString(t.ToString("yyyy-MM-dd HH:mm:ss"));
-		}
+			T[] output = new T[0];
 
-		public static List<string> ExtractValues(string jsonResultValueFromQuery)
-		{
-			List<string> output = new List<string>();
-
-			output = jsonResultValueFromQuery.Split(",").Select(x => x.Trim()).ToList();
+			if (query == null || (string)query.Value == "")
+			{
+				output = new T[0];
+			}
+			else
+			{
+				try
+				{
+					output = JsonConvert.DeserializeObject<T[]>((string)query.Value);
+				}
+				catch
+				{
+					output = new T[] { JsonConvert.DeserializeObject<T>((string)query.Value) };
+				}
+			}
 
 			return output;
 		}

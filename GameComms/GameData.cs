@@ -15,6 +15,14 @@ namespace GameComms
 		public DateTime RegistrationDate { get; set; }
 	}
 
+	public class LogInSession : GameData
+	{
+		public int UserId { get; set; }
+		public string Username { get; set; }
+		public string AccessToken { get; set; }
+		public DateTime LastAccess { get; set; }
+	}
+
 	public class ChatRoom : GameData
 	{
 		public string ChatRoomName { get; set; }

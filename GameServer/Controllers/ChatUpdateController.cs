@@ -19,25 +19,10 @@ namespace GameServer.Controllers
 
 			DateTime time = request.LastMessageRead.AddSeconds(0.1d);
 
-			sql = $"SELECT * FROM Chat.ChatMessages WHERE roomId={request.ChatRoomId} AND DATEDIFF(second, timestamp, {SqlConnector.SqlString(time)}) < 0";
+			sql = $"SELECT * FROM Chat.ChatMessages WHERE roomId={request.ChatRoomId} AND DATEDIFF(second, timestamp, '{time.ToSqlTime()}') < 0";
 			query = SqlConnector.Query(sql);
 
-			if(query == null || (string)query.Value == "")
-			{
-				response.ChatMessages = new ChatMessage[0];
-			}
-			else
-			{
-				try
-				{
-					response.ChatMessages = JsonConvert.DeserializeObject<ChatMessage[]>((string)query.Value);
-				}
-				catch
-				{
-					response.ChatMessages = new ChatMessage[] { JsonConvert.DeserializeObject<ChatMessage>((string)query.Value) };
-				}
-			}
-
+			response.ChatMessages = query.ExtractListFromResult<ChatMessage>();
 			response.Success = true;
 			response.Message = $"{response.ChatMessages.Length} new messages";
 

@@ -10,8 +10,6 @@ namespace GameServer.Controllers
 	[Route("api/[controller]")]
 	public class LogInController : Controller
 	{
-		public static Dictionary<string, GameUser> ActiveUsers = new Dictionary<string, GameUser>();
-
 		[HttpGet("{id}")]
 		public JsonResult Get(int id)
 		{
@@ -41,9 +39,9 @@ namespace GameServer.Controllers
 				return new JsonResult(response);
 			}
 
-			string user = SqlConnector.SqlString(request.Username);
-			string pass = request.Password;
-			string email = SqlConnector.SqlString(request.Email);
+			string user = $"'{request.Username}'";
+			string userTypedPassword = request.Password;
+			string email = $"'{request.Email}'";
 			bool usernameExists = false;
 			bool emailExists = false;
 
@@ -78,29 +76,21 @@ namespace GameServer.Controllers
 			}
 			else if (request.NewRegistration)
 			{
-				if(request.Email == "")
-                {
-					response.Success = false;
-					response.Message = "Invalid email";
-					return Json(response);
-				}
-
-				pass = PasswordHasher.HashPassword(pass);
-				pass = SqlConnector.SqlString(pass);
-
-				sql = $"INSERT INTO Users.Accounts VALUES ({user}, {pass}, {email}, SYSDATETIME())";
-				
-				JsonResult result = SqlConnector.Query(sql);
-
-				if(result != null)
+				GetUserResponse r;
+				GameUser newUser = RegisterNewAccount(request, out r);
+				if(newUser != null)
 				{
-					response.Success = false;
-					response.Message = "New account successfully registered";
+					string sessionKey = CreateNewLogInSession(newUser);
+					response.Success = true;
+					response.Message = r.Message;
+					response.AccessKey = sessionKey;
+					return Json(response);
 				}
 				else
 				{
-					response.Success = false;
-					response.Message = "Account creation failed";
+					response.Success = r.Success;
+					response.Message = r.Message;
+					return Json(response);
 				}
 			}
 			else
@@ -115,14 +105,24 @@ namespace GameServer.Controllers
 					sql = $"SELECT * FROM Users.Accounts WHERE username={user}";
 					query = SqlConnector.Query(sql);
 					GameUser gameUser = JsonConvert.DeserializeObject<GameUser>((string)query.Value);
-					string pw = gameUser.Password;
+					string hashedPassword = gameUser.Password;
 
-					if (PasswordHasher.VerifyHashedPassword(pw, pass))
+					if (PasswordHasher.VerifyHashedPassword(hashedPassword, userTypedPassword))
 					{
-						response.Success = true;
-						response.Message = "Welcome back";
-						//ActiveUsers.Add(pw, gameUser);
-						Console.WriteLine($"{gameUser.Username} has logged in.");
+						string accessKey = CreateNewLogInSession(gameUser);
+
+						if(accessKey != null)
+						{
+							response.AccessKey = accessKey;
+							response.Success = true;
+							response.Message = "Welcome back";
+							Console.WriteLine($"{gameUser.Username} has logged in.");
+						}
+						else
+						{
+							response.Success = false;
+							response.Message = "Session creation failed";
+						}
 					}
 					else
 					{
@@ -145,6 +145,56 @@ namespace GameServer.Controllers
 		public JsonResult Delete(int id)
 		{
 			return Json(false);
+		}
+
+		private static string CreateNewLogInSession(GameUser user)
+		{
+			string accesskey = PasswordHasher.HashPassword(user.Password);
+			string accessToken = PasswordHasher.HashPassword(accesskey);
+			//bool match = PasswordHasher.VerifyHashedPassword(accessToken, accesskey);
+			//Console.WriteLine(accesskey);
+
+			string sql = $"DELETE FROM Users.LogInSessions WHERE userId={user.Id} INSERT INTO Users.LogInSessions VALUES({user.Id}, '{user.Username}', '{accessToken}', SYSDATETIME()) SELECT * FROM Users.LogInSessions WHERE id=SCOPE_IDENTITY()";
+			JsonResult query = SqlConnector.Query(sql);
+			LogInSession newSession = JsonConvert.DeserializeObject<LogInSession>((string)query.Value);
+
+			if(newSession != null)
+			{
+				return accesskey;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		private GameUser RegisterNewAccount(LogInRequest request, out GetUserResponse response)
+		{
+			response = new GetUserResponse();
+
+			if (request.Email == "")
+			{
+				response.Success = false;
+				response.Message = "Invalid email";
+			}
+
+			string hashedPassword = PasswordHasher.HashPassword(request.Password);
+			string sql = $"INSERT INTO Users.Accounts VALUES ('{request.Username}', '{hashedPassword}', '{request.Email}', SYSDATETIME()) SELECT * FROM Users.Accounts WHERE id=SCOPE_IDENTITY()";
+			JsonResult result = SqlConnector.Query(sql);
+			GameUser newUser = JsonConvert.DeserializeObject<GameUser>((string)result.Value);
+
+			if (result != null)
+			{
+				response.Success = false;
+				response.Message = "New account successfully registered";
+			}
+			else
+			{
+				response.Success = false;
+				response.Message = "Account creation failed";
+			}
+
+			return newUser;
 		}
 	}
 }

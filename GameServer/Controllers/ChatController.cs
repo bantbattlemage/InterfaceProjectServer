@@ -130,22 +130,7 @@ namespace GameServer.Controllers
 			sql = $"SELECT * FROM Chat.ChatMessages WHERE roomId={roomId}";
 			query = SqlConnector.Query(sql);
 
-			if (query == null || (string)query.Value == "")
-			{
-				response.ChatMessages = new ChatMessage[0];
-			}
-			else
-			{
-				try
-				{
-					response.ChatMessages = JsonConvert.DeserializeObject<ChatMessage[]>((string)query.Value);
-				}
-				catch
-				{
-					response.ChatMessages = new ChatMessage[] { JsonConvert.DeserializeObject<ChatMessage>((string)query.Value) };
-				}
-			}
-
+			response.ChatMessages = query.ExtractListFromResult<ChatMessage>();
 			response.ChatMessages = response.ChatMessages.OrderBy(x => x.TimeStamp).ToArray();
 
 			response.Success = true;

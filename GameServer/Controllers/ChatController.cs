@@ -33,15 +33,6 @@ namespace GameServer.Controllers
 			int roomId = request.ChatRoomId;
 			int userId = request.SenderUserId;
 
-			Response roomResponse;
-			ChatRoom room = GetChatRoom(roomId, out roomResponse);
-			if(room == null)
-			{
-				response.Message = roomResponse.Message;
-				response.Success = roomResponse.Success;
-				return Json(response);
-            }
-
 			ChatUserResponse chatUserResponse;
 			ChatUser user = GetChatUser(userId, roomId, true, out chatUserResponse);
 			if (user == null)
@@ -96,16 +87,6 @@ namespace GameServer.Controllers
 
 			string sql;
 			JsonResult query;
-			response = new ChatUserResponse();
-
-			Response r;
-			ChatRoom room = GetChatRoom(roomId, out r);
-			if(room == null)
-            {
-				response.Success = r.Success;
-				response.Message = r.Message;
-				return null;
-            }
 
 			ChatUser existingChatUser = GetChatUser(userId, roomId, true, out response);
 			if (existingChatUser != null)

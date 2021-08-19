@@ -17,11 +17,26 @@ namespace GameServer.Controllers
 	[Route("api/[controller]")]
 	public class ChatController : Controller
 	{
+		/// <summary>
+		/// Begins counting backwards from index {startIndex} for {depth} steps and returns the results.
+		/// With no paramaters passed will return the entire chat message history.
+		/// With no {startIndex} passed will start at the most recent message. {depth}=5 would return the 5 most recent messages for example.
+		/// With {depth}=0 and no {startIndex} passed returns the most recent message.
+		/// </summary>
 		[HttpGet("{roomId}")]
-		public JsonResult Get(int roomId)
+		public JsonResult Get(int roomId, [FromQuery] int depth = -1, [FromQuery] int startIndex = -1)
 		{
-			ChatMessageResponse response = GetAllChatMessages(roomId);
+			ChatMessageResponse response;
 
+			if (depth == -1 && startIndex == -1)
+			{
+				 response = GetAllChatMessages(roomId);
+			}
+			else
+			{
+				response = GetRecentMessages(roomId, depth, startIndex);
+			}
+			
 			return Json(response);
 		}
 
@@ -128,6 +143,41 @@ namespace GameServer.Controllers
 			}
 
 			sql = $"SELECT * FROM Chat.ChatMessages WHERE roomId={roomId}";
+			query = SqlConnector.Query(sql);
+
+			response.ChatMessages = query.ExtractListFromResult<ChatMessage>();
+			response.ChatMessages = response.ChatMessages.OrderBy(x => x.TimeStamp).ToArray();
+
+			response.Success = true;
+			response.Message = "success";
+
+			return response;
+		}
+
+		public static ChatMessageResponse GetRecentMessages(int roomId, int depth = 0, int startIndex = -1)
+		{
+			string sql;
+			JsonResult query;
+			ChatMessageResponse response = new ChatMessageResponse();
+
+			Response r;
+			ChatRoom room = GetChatRoom(roomId, out r);
+			if (room == null)
+			{
+				response.Message = r.Message;
+				response.Success = r.Success;
+				return response;
+			}
+
+			if (startIndex == -1)
+			{
+				sql = $"DECLARE @last AS int SELECT @last = id FROM Chat.ChatMessages WHERE roomid={roomId} ORDER BY id ASC SELECT * FROM Chat.ChatMessages WHERE id BETWEEN @last-{depth} AND @last";
+			}
+			else
+			{
+				sql = $"SELECT * FROM Chat.ChatMessages WHERE id BETWEEN {startIndex}-{depth} AND {startIndex}";
+			}
+
 			query = SqlConnector.Query(sql);
 
 			response.ChatMessages = query.ExtractListFromResult<ChatMessage>();

@@ -5,7 +5,7 @@ using System.Linq;
 namespace GameServer.Controllers
 {
 	[Route("api/[controller]")]
-	public class PlayerController : Controller
+	public class TemplateController : Controller
 	{
 		[HttpGet]
 		public JsonResult Get()

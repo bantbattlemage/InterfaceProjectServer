@@ -1,13 +1,16 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace GameComms
 {
-	public class Response
+	[JsonObject]
+	public abstract class Response
     {
 		public bool Success { get; set; }
 		public string Message { get; set; }
 	}
 
+	[JsonObject]
 	public class LogInResponse : Response
 	{
 		public string AccessKey { get; set; }
@@ -15,22 +18,32 @@ namespace GameComms
 		public int UserId { get; set; }
 	}
 
+	[JsonObject]
+	public class GetChatRoomResponse : Response
+	{
+		public ChatRoom Room { get; set; }
+	}
+
+	[JsonObject]
 	public class GetUserResponse : Response
 	{
 		public GameUser User { get; set; }
 	}
 
+	[JsonObject]
 	public class ChatJoinResponse : Response
 	{
 		public ChatUser AssignedChatUser { get; set; }
 		public ChatMessage[] ChatMessages { get; set; }
 	}
 
+	[JsonObject]
 	public class ChatMessageResponse : Response
 	{
 		public ChatMessage[] ChatMessages { get; set; }
 	}
 
+	[JsonObject]
 	public class ChatUserResponse : Response
     {
 		public ChatUser ChatRoomUser { get; set; }

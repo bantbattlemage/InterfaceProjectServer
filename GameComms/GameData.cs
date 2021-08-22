@@ -1,12 +1,15 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace GameComms
 {
-	public class GameData
-    {
+	[JsonObject]
+	public abstract class GameData
+	{
 		public int Id { get; set; }
     }
 
+	[JsonObject]
 	public class GameUser : GameData
 	{
 		public string Username { get; set; }
@@ -15,6 +18,7 @@ namespace GameComms
 		public DateTime RegistrationDate { get; set; }
 	}
 
+	[JsonObject]
 	public class LogInSession : GameData
 	{
 		public int UserId { get; set; }
@@ -23,6 +27,7 @@ namespace GameComms
 		public DateTime LastAccess { get; set; }
 	}
 
+	[JsonObject]
 	public class ChatRoom : GameData
 	{
 		public string ChatRoomName { get; set; }
@@ -30,6 +35,7 @@ namespace GameComms
 		public int PrivateChatOwner { get; set; }
 	}
 
+	[JsonObject]
 	public class ChatMessage : GameData
 	{
 		public int UserId { get; set; }
@@ -39,6 +45,7 @@ namespace GameComms
 		public DateTime TimeStamp { get; set; }
 	}
 
+	[JsonObject]
 	public class ChatUser : GameData
 	{
 		public int UserId { get; set; }

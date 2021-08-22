@@ -18,6 +18,7 @@ namespace GameServer.Controllers
 	public class ChatController : Controller
 	{
 		/// <summary>
+		/// Get is used to read chat messages.
 		/// Begins counting backwards from index {startIndex} for {depth} steps and returns the results.
 		/// With no paramaters passed will return the entire chat message history.
 		/// With no {startIndex} passed will start at the most recent message. {depth}=5 would return the 5 most recent messages for example.
@@ -40,6 +41,9 @@ namespace GameServer.Controllers
 			return Json(response);
 		}
 
+		/// <summary>
+		/// Post is used to post a new chat message. If the same request is recieved twice it will be recorded twice.
+		/// </summary>
 		[HttpPost]
 		public JsonResult Post([FromBody] ChatMessagePostRequest request)
 		{
@@ -62,6 +66,9 @@ namespace GameServer.Controllers
 			return Json(response);
 		}
 
+		/// <summary>
+		/// Put is used to join a chat room. If the same request is recieved twice the same result will be returned without recording duplicate data.
+		/// </summary>
 		[HttpPut]
 		public JsonResult Put([FromBody] JoinChatRoomRequest request)
 		{
@@ -133,7 +140,7 @@ namespace GameServer.Controllers
 			JsonResult query;
 			ChatMessageResponse response = new ChatMessageResponse();
 
-			Response r;
+			GetChatRoomResponse r;
 			ChatRoom room = GetChatRoom(roomId, out r);
 			if (room == null)
 			{
@@ -160,7 +167,7 @@ namespace GameServer.Controllers
 			JsonResult query;
 			ChatMessageResponse response = new ChatMessageResponse();
 
-			Response r;
+			GetChatRoomResponse r;
 			ChatRoom room = GetChatRoom(roomId, out r);
 			if (room == null)
 			{
@@ -189,9 +196,9 @@ namespace GameServer.Controllers
 			return response;
 		}
 
-		public static ChatRoom GetChatRoom(int roomId, out Response response)
+		public static ChatRoom GetChatRoom(int roomId, out GetChatRoomResponse response)
 		{
-			response = new Response();
+			response = new GetChatRoomResponse();
 
 			string sql = $"SELECT * FROM Chat.ChatRooms WHERE id={roomId}";
 			JsonResult query = SqlConnector.Query(sql);
@@ -207,6 +214,7 @@ namespace GameServer.Controllers
 
 			response.Success = true;
 			response.Message = "success";
+			response.Room = result;
 
 			return result;
 		}
